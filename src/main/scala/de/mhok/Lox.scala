@@ -1,11 +1,7 @@
 package de.mhok.lox
 
-object Lox {
+case object Lox:
   var hasError = false
-}
-
-@main def runTest() =
-  run(" ")
 
 @main def runFile(path: String) =
   run(io.Source.fromFile(path).mkString)
