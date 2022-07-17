@@ -1,7 +1,5 @@
 package de.mhok.lox
 
-import de.mhok.lox.Token
-import de.mhok.lox.TokenType
 import scala.annotation.tailrec
 
 object Scanner:
