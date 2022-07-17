@@ -39,7 +39,7 @@ class Scanner(val source: String):
 
   @tailrec
   private def scanToken(): Token =
-    if isAtEnd() then return makeEOFToken()
+    if isAtEnd then return makeEOFToken()
     start = current
     advance() match
       // single character
@@ -88,7 +88,8 @@ class Scanner(val source: String):
         scanToken()
       // error
       case _ =>
-        error(line, "unexpected character")
+        val text = source.substring(start, current)
+        Lox.error(line, "scan error", s"at $text", "unexpected character")
         scanToken()
 
   // char categorization
@@ -114,10 +115,13 @@ class Scanner(val source: String):
     Token(TokenType.EOF, "", null, line)
 
   private def makeStringToken(): Token =
-    while peek() != '"' && !isAtEnd() do
+    while peek() != '"' && !isAtEnd do
       if peek() == '\n' then line += 1
       advance()
-    if isAtEnd() then error(line, "unterminated string")
+    if isAtEnd then
+      val text = source.substring(start, current)
+      Lox.error(line, "scan error", s"at $text", "unterminated string")
+      return makeEOFToken()
     advance()
     makeToken(TokenType.STRING)
 
@@ -132,7 +136,7 @@ class Scanner(val source: String):
     makeToken(Scanner.keywords(source.substring(start, current)))
 
   // cursor movement
-  private def isAtEnd(): Boolean =
+  private def isAtEnd: Boolean =
     current >= source.length
 
   private def peek(offset: Int = 0): Char =
@@ -145,10 +149,10 @@ class Scanner(val source: String):
     return c
 
   private def matchNext(expected: Char): Boolean =
-    if isAtEnd() || source.charAt(current) != expected then false
+    if isAtEnd || source.charAt(current) != expected then false
     else
       current += 1
       true
 
   private def consumeLine(): Unit =
-    while (peek() != '\n' && !isAtEnd()) do advance()
+    while (peek() != '\n' && !isAtEnd) do advance()

@@ -3,6 +3,12 @@ package de.mhok.lox
 case object Lox:
   var hasError = false
 
+  def error(line: Int, what: String, where: String, message: String) =
+    println(s"[line $line] $what $where: $message")
+    Lox.hasError = true
+
+  def exit() = System.exit(if Lox.hasError then 65 else 0)
+
 @main def runTest() =
   val expr = Expr.Binary(
     left = Expr.Unary(
@@ -18,26 +24,21 @@ case object Lox:
 
 @main def runFile(path: String) =
   run(io.Source.fromFile(path).mkString)
-  if Lox.hasError then exit()
+  if Lox.hasError then Lox.exit()
 
 @main def runPrompt() =
   while true do
     print("> ")
     val line = io.StdIn.readLine()
-    if line == null then exit()
+    if line == null then Lox.exit()
     run(line)
     Lox.hasError = false
 
-def run(source: String) =
+def run(source: String): Unit =
   val scanner = Scanner(source)
   val tokens = scanner.scanTokens();
-  for token <- tokens do println(token)
-
-def error(line: Int, message: String) =
-  report(line, "error", "", message)
-  Lox.hasError = true
-
-def report(line: Int, what: String, where: String, message: String) =
-  println(s"[line $line] $what $where: $message")
-
-def exit() = System.exit(if Lox.hasError then 65 else 0)
+  val parser = Parser(tokens)
+  val expr = parser.parse()
+  expr match
+    case Some(e) => println(e)
+    case None => return 
