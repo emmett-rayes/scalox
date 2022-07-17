@@ -1,13 +1,13 @@
 package de.mhok.lox
 
-case object Lox:
+object Lox:
   var hasError = false
 
   def error(line: Int, what: String, where: String, message: String) =
     println(s"[line $line] $what $where: $message")
-    Lox.hasError = true
+    hasError = true
 
-  def exit() = System.exit(if Lox.hasError then 65 else 0)
+  def exit() = System.exit(if hasError then 65 else 0)
 
 @main def runTest() =
   val expr = Expr.Binary(
