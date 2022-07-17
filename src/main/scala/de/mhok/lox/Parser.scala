@@ -114,10 +114,11 @@ class Parser(val tokens: List[Token]):
     var token = tokens(current)
     while token.ttype != TokenType.EOF do
       if token.ttype == TokenType.SEMICOLON then return
-
       tokens(current + 1).ttype match
         case TokenType.CLASS | TokenType.FOR | TokenType.FUN | TokenType.IF |
             TokenType.PRINT | TokenType.RETURN | TokenType.VAR |
             TokenType.WHILE =>
           return
         case _ => return
+      current += 1
+      token = tokens(current)
