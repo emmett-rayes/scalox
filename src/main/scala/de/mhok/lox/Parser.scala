@@ -23,14 +23,23 @@ object Parser:
       case TokenType.EOF =>
         Lox.error(token.line, "parse error", "at file end", message)
       case _ =>
-        Lox.error(token.line, "parse error", f"at ${token.lexeme}", message)
+        Lox.error(token.line, "parse error", s"at ${token.lexeme}", message)
     ParseError()
 
 class Parser(val tokens: List[Token]):
   private var current = 0
 
   def parse(): Option[Expr] =
-    try Some(expression())
+    try
+      val expr = expression()
+      if tokens(current).ttype != TokenType.EOF then
+        Lox.error(
+          tokens(current).line,
+          "parse warning",
+          s"after $expr",
+          "unparsed remaining input",
+        )
+      Some(expr)
     catch case e: ParseError => None
 
   // parsers
