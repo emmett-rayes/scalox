@@ -1,20 +1,5 @@
 package de.mhok.lox
 
-import scala.annotation.tailrec
-import de.mhok.lox.Parser.ParseError
-
-/*
-expression     → equality ;
-equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-term           → factor ( ( "-" | "+" ) factor )* ;
-factor         → unary ( ( "/" | "*" ) unary )* ;
-unary          → ( "!" | "-" ) unary
-               | primary ;
-primary        → NUMBER | STRING | "true" | "false" | "nil"
-               | "(" expression ")" ;
- */
-
 object Parser:
   class ParseError extends RuntimeException
 
@@ -40,7 +25,7 @@ class Parser(val tokens: List[Token]):
           "unparsed remaining input",
         )
       Some(expr)
-    catch case e: ParseError => None
+    catch case e: Parser.ParseError => None
 
   // parsers
   private def expression(): Expr =
