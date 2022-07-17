@@ -3,6 +3,19 @@ package de.mhok.lox
 case object Lox:
   var hasError = false
 
+@main def runTest() =
+  val expr = Expr.Binary(
+    left = Expr.Unary(
+      op = Token(TokenType.MINUS, "-", null, 0),
+      expr = Expr.Literal(123),
+    ),
+    op = Token(TokenType.STAR, "*", null, 0),
+    right = Expr.Grouping(
+      expr = Expr.Literal(45.67)
+    ),
+  )
+  println(expr)
+
 @main def runFile(path: String) =
   run(io.Source.fromFile(path).mkString)
   if Lox.hasError then exit()
