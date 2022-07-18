@@ -1,9 +1,11 @@
 package de.mhok.lox
 
+type Value = Any | Boolean | Double | String | Null
+
 enum Expr:
   case Binary(left: Expr, op: Token, right: Expr)
   case Grouping(expr: Expr)
-  case Literal(value: Any)
+  case Literal(value: Value)
   case Unary(op: Token, expr: Expr)
 
   override def toString(): String = this match
