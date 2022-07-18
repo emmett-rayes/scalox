@@ -1,4 +1,4 @@
-package de.mhok.lox
+package com.emmettrayes.lox
 
 import scala.annotation.tailrec
 

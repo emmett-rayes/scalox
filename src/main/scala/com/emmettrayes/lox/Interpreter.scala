@@ -1,4 +1,4 @@
-package de.mhok.lox
+package com.emmettrayes.lox
 
 object Interpreter:
   case class RuntimeError(token: Token, message: String)

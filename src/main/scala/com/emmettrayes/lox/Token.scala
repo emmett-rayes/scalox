@@ -1,4 +1,4 @@
-package de.mhok.lox
+package com.emmettrayes.lox
 
 case class Token(ttype: TokenType, lexeme: String, literal: Any, line: Int):
   override def toString(): String =
