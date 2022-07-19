@@ -96,8 +96,7 @@ class Parser(val tokens: List[Token]):
     var token = tokens(current)
     while token.ttype != TokenType.RIGHT_BRACE && token.ttype != TokenType.EOF
     do
-      current += 1
-      stmts.addOne(statement())
+      stmts.addOne(declaration())
       token = tokens(current)
     val next = tokens(current)
     next.ttype match
