@@ -45,19 +45,23 @@ class Parser(val tokens: List[Token]):
       case _ =>
         statement()
 
+  // statements
   private def statement(): Stmt =
     val token = tokens(current)
+    current += 1 // assumption
     token.ttype match
       case TokenType.IF =>
-        advance()
         ifStmt()
+      case TokenType.WHILE =>
+        whileStmt()
+      case TokenType.FOR =>
+        forStmt()
       case TokenType.PRINT =>
-        advance()
         printStmt()
       case TokenType.LEFT_BRACE =>
-        advance()
         block()
       case _ =>
+        current -= 1 // rollback assumption
         exprStmt()
 
   private def printStmt(): Stmt =
@@ -129,8 +133,76 @@ class Parser(val tokens: List[Token]):
           case _ =>
             throw Parser.error(rp, "expecting ')' after if condition")
       case _ =>
-        throw Parser.error(lp, "expecting '(' before if condition")
+        throw Parser.error(lp, "expecting '(' after 'if'")
 
+  private def whileStmt(): Stmt =
+    val lp = tokens(current)
+    lp.ttype match
+      case TokenType.LEFT_PAREN =>
+        advance()
+        val condition = expression()
+        val rp = tokens(current)
+        rp.ttype match
+          case TokenType.RIGHT_PAREN =>
+            advance()
+            val body = statement()
+            Stmt.WhileStmt(condition, body)
+          case _ =>
+            throw Parser.error(rp, "expecting ')' after loop condition")
+      case _ =>
+        throw Parser.error(lp, "expecting '(' after 'while' condition")
+
+  private def forStmt(): Stmt =
+    val lp = tokens(current)
+    lp.ttype match
+      case TokenType.LEFT_PAREN =>
+        advance()
+        val itoken = tokens(current)
+        val init = itoken.ttype match
+          case TokenType.SEMICOLON =>
+            advance()
+            None
+          case TokenType.VAR =>
+            advance()
+            Some(varDecl())
+          case _ => Some(exprStmt())
+        val ctoken = tokens(current)
+        val cond = ctoken.ttype match
+          case TokenType.SEMICOLON =>
+            advance()
+            Expr.Literal(true)
+          case _ => expression()
+        val stoken = tokens(current)
+        stoken.ttype match
+          case TokenType.SEMICOLON =>
+            advance()
+            val utoken = tokens(current)
+            val incr = utoken.ttype match
+              case TokenType.RIGHT_PAREN =>
+                advance()
+                None
+              case _ => Some(expression())
+            val rp = tokens(current)
+            rp.ttype match
+              case TokenType.RIGHT_PAREN =>
+                advance()
+                val forBody = statement()
+                val whileBody = incr match
+                  case None => forBody
+                  case Some(expr) =>
+                    Stmt.Block(List(forBody, Stmt.ExprStmt(expr)))
+                val whileStmt = Stmt.WhileStmt(cond, whileBody)
+                init match
+                  case None       => whileStmt
+                  case Some(stmt) => Stmt.Block(List(stmt, whileStmt))
+              case _ =>
+                throw Parser.error(lp, "expecting ')' loop clauses")
+          case _ =>
+            throw Parser.error(lp, "expecting ';' after loop condition")
+      case _ =>
+        throw Parser.error(lp, "expecting '(' after 'for'")
+
+  // expressions
   private def expression(): Expr =
     assignment()
 
@@ -216,6 +288,7 @@ class Parser(val tokens: List[Token]):
   private def binary(parser: () => Expr, ops: TokenType*): Expr =
     star(Expr.Binary.apply, parser, ops*)
 
+  // helpers
   private def star(
       ast: (Expr, Token, Expr) => Expr,
       parser: () => Expr,

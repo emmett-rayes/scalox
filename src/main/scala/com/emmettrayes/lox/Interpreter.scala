@@ -37,6 +37,8 @@ object Interpreter:
           elseBranch match
             case None       => return
             case Some(stmt) => execute(stmt)
+      case Stmt.WhileStmt(condition, body) =>
+        while (truthy(evaluate(condition))) do execute(body)
 
   private def executeBlock(stmts: List[Stmt])(using env: Environment): Unit =
     given Environment(env)
