@@ -34,7 +34,6 @@ class Scanner(val source: String):
       token.ttype match
         case TokenType.EOF => tokens :+ token
         case _             => addToken(tokens :+ token)
-
     return addToken(Seq.empty).toList
 
   @tailrec

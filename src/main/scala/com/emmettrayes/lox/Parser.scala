@@ -1,5 +1,7 @@
 package com.emmettrayes.lox
 
+import scala.annotation.tailrec
+
 object Parser:
   class ParseError extends RuntimeException
 
@@ -14,20 +16,41 @@ object Parser:
 class Parser(val tokens: List[Token]):
   private var current = 0
 
-  def parse(): Option[Expr] =
-    try
-      val expr = expression()
-      if tokens(current).ttype != TokenType.EOF then
-        Lox.error(
-          tokens(current).line,
-          "parse warning",
-          s"after $expr",
-          "unparsed remaining input",
-        )
-      Some(expr)
-    catch case e: Parser.ParseError => None
-
+  def parse(): List[Stmt] =
+    @tailrec
+    def addStmt(stmts: Seq[Stmt]): Seq[Stmt] =
+      val stmt = statement()
+      val token = tokens(current)
+      token.ttype match
+        case TokenType.EOF => stmts :+ stmt
+        case _             => addStmt(stmts :+ stmt)
+    return addStmt(Seq.empty).toList
   // parsers
+  private def statement(): Stmt =
+    val token = tokens(current)
+    token.ttype match
+      case TokenType.PRINT =>
+        current += 1
+        printStmt()
+      case _ =>
+        exprStmt()
+
+  private def printStmt(): Stmt =
+    val expr = expression()
+    val token = tokens(current)
+    token.ttype match
+      case TokenType.SEMICOLON => current += 1
+      case _ => throw Parser.error(token, "expecting ';' after expression")
+    Stmt.PrintStmt(expr)
+
+  private def exprStmt(): Stmt =
+    val expr = expression()
+    val token = tokens(current)
+    token.ttype match
+      case TokenType.SEMICOLON => current += 1
+      case _ => throw Parser.error(token, "expecting ';' after expression")
+    Stmt.ExprStmt(expr)
+
   private def expression(): Expr =
     equality()
 
