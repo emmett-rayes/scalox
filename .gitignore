@@ -33,3 +33,6 @@ metals.sbt
 
 # Worksheet
 *.worksheet.sc
+
+# Misc.
+.VSCodeCounter
