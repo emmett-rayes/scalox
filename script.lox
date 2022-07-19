@@ -9,10 +9,12 @@ var c = "global c";
     print a;
     print b;
     print c;
+    print "";
   }
   print a;
   print b;
   print c;
+  print "";
 }
 print a;
 print b;

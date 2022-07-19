@@ -2,7 +2,7 @@ package com.emmettrayes.lox
 
 import scala.collection.mutable.Map
 
-implicit def someEnv(env: Environment): Option[Environment] = Some(env)
+private implicit def someEnv(env: Environment): Option[Environment] = Some(env)
 
 class Environment(val enclosing: Option[Environment] = None):
   private val values: Map[String, Value] = Map.empty
