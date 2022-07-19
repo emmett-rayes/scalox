@@ -4,10 +4,8 @@ object Interpreter:
   case class RuntimeError(token: Token, message: String)
       extends RuntimeException
 
-  def interpret(expr: Expr): Unit =
-    try
-      val value = evaluate(expr)
-      println(stringify(value))
+  def interpret(stmts: List[Stmt]): Unit =
+    try for stmt <- stmts do execute(stmt)
     catch
       case e: RuntimeError =>
         Lox.runtimeError(
@@ -16,6 +14,14 @@ object Interpreter:
           s"at ${e.token.lexeme}",
           e.message,
         )
+
+  private def execute(stmt: Stmt): Unit =
+    stmt match
+      case Stmt.ExprStmt(expr) =>
+        evaluate(expr)
+      case Stmt.PrintStmt(expr) =>
+        val value = evaluate(expr)
+        println(stringify(value))
 
   private def evaluate(expr: Expr): Value =
     expr match

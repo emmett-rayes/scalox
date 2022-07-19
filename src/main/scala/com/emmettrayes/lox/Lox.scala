@@ -45,8 +45,5 @@ def run(source: String): Unit =
   val scanner = Scanner(source)
   val tokens = scanner.scanTokens();
   val parser = Parser(tokens)
-  val expr = parser.parse()
-  expr match
-    case Some(e) =>
-      Interpreter.interpret(e)
-    case None => return
+  val stmts = parser.parse()
+  Interpreter.interpret(stmts)
