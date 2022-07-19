@@ -1,5 +1,7 @@
-val scala3Version = "3.1.3"
+fork in Global := true
+cancelable in Global := true
 
+val scala3Version = "3.1.3"
 lazy val scalox = project
   .in(file("."))
   .settings(
