@@ -83,7 +83,7 @@ class Scanner(val source: String):
       case ' ' | '\r' | '\t' =>
         scanToken()
       case '\n' =>
-        current += 1
+        line += 1
         scanToken()
       // error
       case _ =>
