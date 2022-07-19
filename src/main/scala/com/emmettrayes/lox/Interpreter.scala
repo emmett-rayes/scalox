@@ -1,12 +1,11 @@
 package com.emmettrayes.lox
 
 object Interpreter:
-  private given Environment(None)
-
   case class RuntimeError(token: Token, message: String)
       extends RuntimeException
 
   def interpret(stmts: List[Stmt]): Unit =
+    given Environment()
     try for stmt <- stmts do execute(stmt)
     catch
       case e: RuntimeError =>
