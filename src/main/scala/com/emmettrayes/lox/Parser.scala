@@ -88,7 +88,21 @@ class Parser(val tokens: List[Token]):
     Stmt.VarDecl(ident, init)
 
   private def expression(): Expr =
-    equality()
+    assignment()
+
+  private def assignment(): Expr =
+    val expr = equality() // consume lhs as rvalue
+    val token = tokens(current)
+    token.ttype match
+      case TokenType.EQUAL =>
+        advance()
+        val value = assignment() // consume rhs
+        expr match
+          case Expr.Variable(name) => Expr.Assign(name, value)
+          case _ =>
+            Parser.error(token, "invalid assignment target") // no panic
+            expr
+      case _ => expr
 
   private def equality(): Expr =
     binary(
@@ -171,17 +185,17 @@ class Parser(val tokens: List[Token]):
 
   // panic mode
   private def synchronize(): Unit =
-    advance()
     var token = tokens(current)
     while token.ttype != TokenType.EOF do
-      if token.ttype == TokenType.SEMICOLON then return
-      tokens(current + 1).ttype match
+      token.ttype match
+        case TokenType.SEMICOLON =>
+          advance()
+          return
         case TokenType.CLASS | TokenType.FOR | TokenType.FUN | TokenType.IF |
             TokenType.PRINT | TokenType.RETURN | TokenType.VAR |
             TokenType.WHILE =>
           return
-        case _ => return
-      advance()
+        case _ => advance()
       token = tokens(current)
 
   // cursor

@@ -8,6 +8,7 @@ enum Expr:
   case Literal(value: Value)
   case Unary(op: Token, expr: Expr)
   case Variable(name: Token)
+  case Assign(name: Token, value: Expr)
 
   override def toString(): String = this match
     case Binary(left, op, right) => s"(${op.lexeme} $left $right)"
@@ -15,4 +16,5 @@ enum Expr:
     case Literal(null)           => s"nil"
     case Literal(value)          => s"$value"
     case Unary(op, expr)         => s"(${op.lexeme} $expr)"
-    case Variable(name)          => s"var ${name.lexeme}"
+    case Variable(name)          => s"${name.lexeme}"
+    case Assign(name, expr)      => s"${name.lexeme}=$expr"

@@ -22,12 +22,22 @@ object Interpreter:
       case Stmt.PrintStmt(expr) =>
         val value = evaluate(expr)
         println(stringify(value))
+      case Stmt.VarDecl(name, init) =>
+        val value = init match
+          case None       => null
+          case Some(expr) => evaluate(expr)
+        Environment.define(name.lexeme, value)
 
   private def evaluate(expr: Expr): Value =
     expr match
       case Expr.Literal(null)  => null
       case Expr.Literal(value) => value
       case Expr.Grouping(expr) => evaluate(expr)
+      case Expr.Variable(name) => Environment.get(name)
+      case Expr.Assign(name, expr) =>
+        val value = evaluate(expr)
+        Environment.assign(name, value)
+        return value
       case Expr.Unary(op, expr) =>
         val value = evaluate(expr)
         op.ttype match
@@ -92,7 +102,6 @@ object Interpreter:
           case TokenType.BANG_EQUAL =>
             lvalue != rvalue
           case _ => ??? // unreachable
-
   private def truthy(value: Value): Boolean =
     value match
       case false | 0d | "" | null => false
