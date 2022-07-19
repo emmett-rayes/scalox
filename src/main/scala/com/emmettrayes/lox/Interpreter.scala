@@ -4,8 +4,9 @@ object Interpreter:
   case class RuntimeError(token: Token, message: String)
       extends RuntimeException
 
+  private given Environment()
+
   def interpret(stmts: List[Stmt]): Unit =
-    given Environment()
     try for stmt <- stmts do execute(stmt)
     catch
       case e: RuntimeError =>
@@ -18,6 +19,8 @@ object Interpreter:
 
   private def execute(stmt: Stmt)(using env: Environment): Unit =
     stmt match
+      case Stmt.Block(stmts) =>
+        executeBlock(stmts)
       case Stmt.ExprStmt(expr) =>
         evaluate(expr)
       case Stmt.PrintStmt(expr) =>
@@ -28,8 +31,12 @@ object Interpreter:
           case None       => null
           case Some(expr) => evaluate(expr)
         env.define(name.lexeme, value)
-      case Stmt.Block(stmts) =>
-        executeBlock(stmts)
+      case Stmt.IfStmt(condition, thenBranch, elseBranch) =>
+        if truthy(evaluate(condition)) then execute(thenBranch)
+        else
+          elseBranch match
+            case None       => return
+            case Some(stmt) => execute(stmt)
 
   private def executeBlock(stmts: List[Stmt])(using env: Environment): Unit =
     given Environment(env)
@@ -45,6 +52,15 @@ object Interpreter:
         val value = evaluate(expr)
         env.assign(name, value)
         return value
+      case Expr.Logical(left, op, right) =>
+        op.ttype match
+          case TokenType.OR =>
+            val value = evaluate(left)
+            if truthy(value) then value else evaluate(right)
+          case TokenType.AND =>
+            val value = evaluate(left)
+            if !truthy(value) then value else evaluate(right)
+          case _ => ??? // unreachable
       case Expr.Unary(op, expr) =>
         val value = evaluate(expr)
         op.ttype match

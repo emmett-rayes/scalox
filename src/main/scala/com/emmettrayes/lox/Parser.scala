@@ -48,6 +48,9 @@ class Parser(val tokens: List[Token]):
   private def statement(): Stmt =
     val token = tokens(current)
     token.ttype match
+      case TokenType.IF =>
+        advance()
+        ifStmt()
       case TokenType.PRINT =>
         advance()
         printStmt()
@@ -105,11 +108,34 @@ class Parser(val tokens: List[Token]):
         throw Parser.error(next, "expecting '}' after block")
     Stmt.Block(stmts.toList)
 
+  private def ifStmt(): Stmt =
+    val lp = tokens(current)
+    lp.ttype match
+      case TokenType.LEFT_PAREN =>
+        advance()
+        val condition = expression()
+        val rp = tokens(current)
+        rp.ttype match
+          case TokenType.RIGHT_PAREN =>
+            advance()
+            val thenBranch = statement()
+            val token = tokens(current)
+            val elseBranch = token.ttype match
+              case TokenType.ELSE =>
+                advance()
+                Some(statement())
+              case _ => None
+            Stmt.IfStmt(condition, thenBranch, elseBranch)
+          case _ =>
+            throw Parser.error(rp, "expecting ')' after if condition")
+      case _ =>
+        throw Parser.error(lp, "expecting '(' before if condition")
+
   private def expression(): Expr =
     assignment()
 
   private def assignment(): Expr =
-    val expr = equality() // consume lhs as rvalue
+    val expr = or() // consume lhs as rvalue
     val token = tokens(current)
     token.ttype match
       case TokenType.EQUAL =>
@@ -123,11 +149,7 @@ class Parser(val tokens: List[Token]):
       case _ => expr
 
   private def equality(): Expr =
-    binary(
-      parser = comparison,
-      TokenType.BANG_EQUAL,
-      TokenType.EQUAL_EQUAL,
-    )
+    binary(parser = comparison, TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)
 
   private def comparison(): Expr =
     binary(
@@ -139,18 +161,10 @@ class Parser(val tokens: List[Token]):
     )
 
   private def term(): Expr =
-    binary(
-      parser = factor,
-      TokenType.MINUS,
-      TokenType.PLUS,
-    )
+    binary(parser = factor, TokenType.MINUS, TokenType.PLUS)
 
   private def factor(): Expr =
-    binary(
-      parser = () => unary(),
-      TokenType.SLASH,
-      TokenType.STAR,
-    )
+    binary(parser = unary, TokenType.SLASH, TokenType.STAR)
 
   private def unary(): Expr =
     val token = tokens(current)
@@ -190,14 +204,30 @@ class Parser(val tokens: List[Token]):
         current -= 1 // assumption rollback
         throw Parser.error(token, "expecting an expression")
 
+  private def or(): Expr =
+    logical(parser = and, TokenType.OR)
+
+  private def and(): Expr =
+    logical(parser = equality, TokenType.AND)
+
+  private def logical(parser: () => Expr, ops: TokenType*): Expr =
+    star(Expr.Logical.apply, parser, ops*)
+
   private def binary(parser: () => Expr, ops: TokenType*): Expr =
+    star(Expr.Binary.apply, parser, ops*)
+
+  private def star(
+      ast: (Expr, Token, Expr) => Expr,
+      parser: () => Expr,
+      ops: TokenType*
+  ): Expr =
     var left = parser()
     var token = tokens(current)
     while ops.contains(token.ttype) && token.ttype != TokenType.EOF do
       advance()
       val op = token
       val right = parser()
-      left = Expr.Binary(left, op, right)
+      left = ast(left, op, right)
       token = tokens(current)
     return left
 
