@@ -18,19 +18,37 @@ class Parser(val tokens: List[Token]):
 
   def parse(): List[Stmt] =
     @tailrec
-    def addStmt(stmts: Seq[Stmt]): Seq[Stmt] =
-      val stmt = statement()
+    def addStmt(acc: Seq[Stmt]): Seq[Stmt] =
+      val stmtOpt =
+        try Some(declaration())
+        catch
+          case e: Parser.ParseError =>
+            synchronize()
+            None
       val token = tokens(current)
+      val stmts = stmtOpt match
+        case None       => acc
+        case Some(stmt) => acc :+ stmt
       token.ttype match
-        case TokenType.EOF => stmts :+ stmt
-        case _             => addStmt(stmts :+ stmt)
+        case TokenType.EOF => stmts
+        case _             => addStmt(stmts)
     return addStmt(Seq.empty).toList
+
   // parsers
+  private def declaration(): Stmt =
+    val token = tokens(current)
+    token.ttype match
+      case TokenType.VAR =>
+        advance()
+        varDecl()
+      case _ =>
+        statement()
+
   private def statement(): Stmt =
     val token = tokens(current)
     token.ttype match
       case TokenType.PRINT =>
-        current += 1
+        advance()
         printStmt()
       case _ =>
         exprStmt()
@@ -39,7 +57,7 @@ class Parser(val tokens: List[Token]):
     val expr = expression()
     val token = tokens(current)
     token.ttype match
-      case TokenType.SEMICOLON => current += 1
+      case TokenType.SEMICOLON => advance()
       case _ => throw Parser.error(token, "expecting ';' after expression")
     Stmt.PrintStmt(expr)
 
@@ -47,9 +65,27 @@ class Parser(val tokens: List[Token]):
     val expr = expression()
     val token = tokens(current)
     token.ttype match
-      case TokenType.SEMICOLON => current += 1
+      case TokenType.SEMICOLON => advance()
       case _ => throw Parser.error(token, "expecting ';' after expression")
     Stmt.ExprStmt(expr)
+
+  private def varDecl(): Stmt =
+    val ident = tokens(current)
+    ident.ttype match
+      case TokenType.IDENTIFIER => advance()
+      case _ => throw Parser.error(ident, "expecting a variable name")
+    val next = tokens(current)
+    val init = next.ttype match
+      case TokenType.EQUAL =>
+        advance()
+        Some(expression())
+      case _ => None
+    val token = tokens(current)
+    token.ttype match
+      case TokenType.SEMICOLON => advance()
+      case _ =>
+        throw Parser.error(token, "expecting ';' after variable declaration")
+    Stmt.VarDecl(ident, init)
 
   private def expression(): Expr =
     equality()
@@ -88,7 +124,7 @@ class Parser(val tokens: List[Token]):
     val token = tokens(current)
     token.ttype match
       case TokenType.BANG | TokenType.MINUS =>
-        current += 1
+        advance()
         val op = token
         val right = unary()
         Expr.Unary(op, right)
@@ -99,6 +135,8 @@ class Parser(val tokens: List[Token]):
     val token = tokens(current)
     current += 1 // assumption
     token.ttype match
+      case TokenType.IDENTIFIER =>
+        Expr.Variable(token)
       case TokenType.FALSE =>
         Expr.Literal(false)
       case TokenType.TRUE =>
@@ -112,7 +150,7 @@ class Parser(val tokens: List[Token]):
         val next = tokens(current)
         next.ttype match
           case TokenType.RIGHT_PAREN =>
-            current += 1
+            advance()
             Expr.Grouping(expr)
           case _ =>
             throw Parser.error(next, "expecting ')' after expression")
@@ -124,7 +162,7 @@ class Parser(val tokens: List[Token]):
     var left = parser()
     var token = tokens(current)
     while ops.contains(token.ttype) && token.ttype != TokenType.EOF do
-      current += 1
+      advance()
       val op = token
       val right = parser()
       left = Expr.Binary(left, op, right)
@@ -133,7 +171,7 @@ class Parser(val tokens: List[Token]):
 
   // panic mode
   private def synchronize(): Unit =
-    current += 1
+    advance()
     var token = tokens(current)
     while token.ttype != TokenType.EOF do
       if token.ttype == TokenType.SEMICOLON then return
@@ -143,5 +181,9 @@ class Parser(val tokens: List[Token]):
             TokenType.WHILE =>
           return
         case _ => return
-      current += 1
+      advance()
       token = tokens(current)
+
+  // cursor
+  private def advance(): Unit =
+    current += 1
