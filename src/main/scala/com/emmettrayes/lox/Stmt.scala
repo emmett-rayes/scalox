@@ -4,3 +4,4 @@ enum Stmt:
     case ExprStmt(expr: Expr)
     case PrintStmt(expr: Expr)
     case VarDecl(name: Token, init: Option[Expr])
+    case Block(stmts: List[Stmt])

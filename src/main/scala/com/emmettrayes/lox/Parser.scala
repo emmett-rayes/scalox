@@ -1,6 +1,7 @@
 package com.emmettrayes.lox
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 object Parser:
   class ParseError extends RuntimeException
@@ -50,6 +51,9 @@ class Parser(val tokens: List[Token]):
       case TokenType.PRINT =>
         advance()
         printStmt()
+      case TokenType.LEFT_BRACE =>
+        advance()
+        block()
       case _ =>
         exprStmt()
 
@@ -86,6 +90,21 @@ class Parser(val tokens: List[Token]):
       case _ =>
         throw Parser.error(token, "expecting ';' after variable declaration")
     Stmt.VarDecl(ident, init)
+
+  private def block(): Stmt =
+    val stmts: ListBuffer[Stmt] = ListBuffer.empty
+    var token = tokens(current)
+    while token.ttype != TokenType.RIGHT_BRACE && token.ttype != TokenType.EOF
+    do
+      current += 1
+      stmts.addOne(statement())
+      token = tokens(current)
+    val next = tokens(current)
+    next.ttype match
+      case TokenType.RIGHT_BRACE => advance()
+      case _ =>
+        throw Parser.error(next, "expecting '}' after block")
+    Stmt.Block(stmts.toList)
 
   private def expression(): Expr =
     assignment()

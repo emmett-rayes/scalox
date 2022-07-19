@@ -16,17 +16,7 @@ object Lox:
     System.exit(if hasError then 65 else if hasRuntimeError then 70 else 0)
 
 @main def runTest() =
-  val expr = Expr.Binary(
-    left = Expr.Unary(
-      op = Token(TokenType.MINUS, "-", null, 0),
-      expr = Expr.Literal(123),
-    ),
-    op = Token(TokenType.STAR, "*", null, 0),
-    right = Expr.Grouping(
-      expr = Expr.Literal(45.67)
-    ),
-  )
-  println(expr)
+  runFile("script.lox")
 
 @main def runFile(path: String) =
   run(io.Source.fromFile(path).mkString)

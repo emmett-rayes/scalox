@@ -1,11 +1,14 @@
 package com.emmettrayes.lox
 
 object Interpreter:
+  private given Environment(None)
+  private val interpreter = Interpreter()
+
   case class RuntimeError(token: Token, message: String)
       extends RuntimeException
 
   def interpret(stmts: List[Stmt]): Unit =
-    try for stmt <- stmts do execute(stmt)
+    try for stmt <- stmts do interpreter.execute(stmt)
     catch
       case e: RuntimeError =>
         Lox.runtimeError(
@@ -15,6 +18,7 @@ object Interpreter:
           e.message,
         )
 
+class Interpreter(using private val env: Environment):
   private def execute(stmt: Stmt): Unit =
     stmt match
       case Stmt.ExprStmt(expr) =>
@@ -26,17 +30,23 @@ object Interpreter:
         val value = init match
           case None       => null
           case Some(expr) => evaluate(expr)
-        Environment.define(name.lexeme, value)
+        env.define(name.lexeme, value)
+      case Stmt.Block(stmts) =>
+        executeBlock(stmts)
+
+  private def executeBlock(stmts: List[Stmt]): Unit =
+    given Environment(env)
+    for stmt <- stmts do execute(stmt)
 
   private def evaluate(expr: Expr): Value =
     expr match
       case Expr.Literal(null)  => null
       case Expr.Literal(value) => value
       case Expr.Grouping(expr) => evaluate(expr)
-      case Expr.Variable(name) => Environment.get(name)
+      case Expr.Variable(name) => env.get(name)
       case Expr.Assign(name, expr) =>
         val value = evaluate(expr)
-        Environment.assign(name, value)
+        env.assign(name, value)
         return value
       case Expr.Unary(op, expr) =>
         val value = evaluate(expr)
@@ -47,7 +57,7 @@ object Interpreter:
             value match
               case d: Double => -d
               case _ =>
-                throw RuntimeError(op, "operand must be a number");
+                throw Interpreter.RuntimeError(op, "operand must be a number");
           case _ => ??? // unreachable
       case Expr.Binary(left, op, right) =>
         val lvalue = evaluate(left)
@@ -58,7 +68,7 @@ object Interpreter:
               case (d1: Double, d2: Double) => d1 + d2
               case (s1: String, s2: String) => s1 + s2
               case _ =>
-                throw RuntimeError(
+                throw Interpreter.RuntimeError(
                   op,
                   "operands must be both numbers or strings",
                 )
@@ -66,37 +76,37 @@ object Interpreter:
             (lvalue, rvalue) match
               case (d1: Double, d2: Double) => d1 - d2
               case _ =>
-                throw RuntimeError(op, "operands must be numbers")
+                throw Interpreter.RuntimeError(op, "operands must be numbers")
           case TokenType.STAR =>
             (lvalue, rvalue) match
               case (d1: Double, d2: Double) => d1 * d2
               case _ =>
-                throw RuntimeError(op, "operands must be numbers")
+                throw Interpreter.RuntimeError(op, "operands must be numbers")
           case TokenType.SLASH =>
             (lvalue, rvalue) match
               case (d1: Double, d2: Double) => d1 / d2
               case _ =>
-                throw RuntimeError(op, "operands must be numbers")
+                throw Interpreter.RuntimeError(op, "operands must be numbers")
           case TokenType.GREATER =>
             (lvalue, rvalue) match
               case (d1: Double, d2: Double) => d1 > d2
               case _ =>
-                throw RuntimeError(op, "operands must be numbers")
+                throw Interpreter.RuntimeError(op, "operands must be numbers")
           case TokenType.GREATER_EQUAL =>
             (lvalue, rvalue) match
               case (d1: Double, d2: Double) => d1 >= d2
               case _ =>
-                throw RuntimeError(op, "operands must be numbers")
+                throw Interpreter.RuntimeError(op, "operands must be numbers")
           case TokenType.LESS =>
             (lvalue, rvalue) match
               case (d1: Double, d2: Double) => d1 < d2
               case _ =>
-                throw RuntimeError(op, "operands must be numbers")
+                throw Interpreter.RuntimeError(op, "operands must be numbers")
           case TokenType.LESS_EQUAL =>
             (lvalue, rvalue) match
               case (d1: Double, d2: Double) => d1 <= d2
               case _ =>
-                throw RuntimeError(op, "operands must be numbers")
+                throw Interpreter.RuntimeError(op, "operands must be numbers")
           case TokenType.EQUAL_EQUAL =>
             lvalue == rvalue
           case TokenType.BANG_EQUAL =>
