@@ -11,7 +11,7 @@ enum Expr:
   case Variable(name: Token)
   case Assign(name: Token, value: Expr)
 
-  override def toString(): String = this match
+  override def toString: String = this match
     case Logical(left, op, right) => s"(${op.lexeme} $left $right)"
     case Binary(left, op, right)  => s"(${op.lexeme} $left $right)"
     case Grouping(expr)           => s"(group $expr)"

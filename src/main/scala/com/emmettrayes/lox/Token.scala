@@ -1,7 +1,7 @@
 package com.emmettrayes.lox
 
 case class Token(ttype: TokenType, lexeme: String, literal: Any, line: Int):
-  override def toString(): String =
+  override def toString: String =
     ttype.toString
       + (if lexeme != "" then " " + lexeme else "")
       + (if literal != null then " " + literal else "")

@@ -23,7 +23,7 @@ class Parser(val tokens: List[Token]):
       val stmtOpt =
         try Some(declaration())
         catch
-          case e: Parser.ParseError =>
+          case _: Parser.ParseError =>
             synchronize()
             None
       val token = tokens(current)
@@ -33,7 +33,7 @@ class Parser(val tokens: List[Token]):
       token.ttype match
         case TokenType.EOF => stmts
         case _             => addStmt(stmts)
-    return addStmt(Seq.empty).toList
+    addStmt(Seq.empty).toList
 
   // parsers
   private def declaration(): Stmt =

@@ -34,7 +34,7 @@ class Scanner(val source: String):
       token.ttype match
         case TokenType.EOF => tokens :+ token
         case _             => addToken(tokens :+ token)
-    return addToken(Seq.empty).toList
+    addToken(Seq.empty).toList
 
   @tailrec
   private def scanToken(): Token =
@@ -103,7 +103,7 @@ class Scanner(val source: String):
 
   // token constructors
   private def makeToken(ttype: TokenType): Token =
-    val text = source.substring(start, current)
+    val text = source.substring(start, current).nn
     val literal = ttype match
       case TokenType.STRING => text.substring(1, text.length - 1)
       case TokenType.NUMBER => text.toDouble
@@ -126,13 +126,13 @@ class Scanner(val source: String):
 
   private def makeNumberToken(): Token =
     while isDigit(peek()) do advance()
-    if peek(offset = 0) == '.' && isDigit(peek(offset = 1)) then advance()
+    if peek() == '.' && isDigit(peek(offset = 1)) then advance()
     while isDigit(peek()) do advance()
     makeToken(TokenType.NUMBER)
 
   private def makeIdentifierToken(): Token =
     while isAlphaNumeric(peek()) do advance()
-    makeToken(Scanner.keywords(source.substring(start, current)))
+    makeToken(Scanner.keywords(source.substring(start, current).nn))
 
   // cursor movement
   private def isAtEnd: Boolean =
@@ -154,4 +154,4 @@ class Scanner(val source: String):
       true
 
   private def consumeLine(): Unit =
-    while (peek() != '\n' && !isAtEnd) do advance()
+    while peek() != '\n' && !isAtEnd do advance()

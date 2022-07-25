@@ -38,7 +38,7 @@ object Interpreter:
             case None       => return
             case Some(stmt) => execute(stmt)
       case Stmt.WhileStmt(condition, body) =>
-        while (truthy(evaluate(condition))) do execute(body)
+        while truthy(evaluate(condition)) do execute(body)
 
   private def executeBlock(stmts: List[Stmt])(using env: Environment): Unit =
     given Environment(env)
@@ -135,5 +135,5 @@ object Interpreter:
   private def stringify(value: Value): String =
     value match
       case null      => "nil"
-      case d: Double => d.toString().stripSuffix(".0")
-      case _         => value.toString()
+      case d: Double => d.toString.stripSuffix(".0")
+      case _         => value.toString

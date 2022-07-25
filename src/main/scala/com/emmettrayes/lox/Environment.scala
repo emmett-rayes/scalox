@@ -1,11 +1,11 @@
 package com.emmettrayes.lox
 
-import scala.collection.mutable.Map
+import scala.collection.mutable
 
 given Conversion[Environment, Option[Environment]] = Option(_)
 
 class Environment(val enclosing: Option[Environment] = None):
-  private val values: Map[String, Value] = Map.empty
+  private val values: mutable.Map[String, Value] = mutable.Map.empty
 
   def define(name: String, value: Value): Unit =
     values(name) = value
