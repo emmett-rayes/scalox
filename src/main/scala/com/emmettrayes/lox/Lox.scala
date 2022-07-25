@@ -22,9 +22,6 @@ object Lox:
   def exit(): Unit =
     System.exit(if hasError then 65 else if hasRuntimeError then 70 else 0)
 
-@main def runTest(): Unit =
-  runFile("script.lox")
-
 @main def runFile(path: String): Unit =
   Using(io.Source.fromFile(path)) { reader =>
     run(reader.mkString)
