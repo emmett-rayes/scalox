@@ -1,5 +1,7 @@
 package com.emmettrayes.lox
 
+import scala.language.implicitConversions
+
 object Interpreter:
   case class RuntimeError(token: Token, message: String)
       extends RuntimeException

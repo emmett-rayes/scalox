@@ -10,6 +10,7 @@ lazy val scalox = project
     scalaVersion := scala3Version,
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
     scalacOptions ++= Seq(
+      "-feature",
       "-Ysafe-init",
       "-Yexplicit-nulls",
     )
